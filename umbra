@@ -3,7 +3,7 @@
 require 'colorize'
 
 # Declaration of constants
-Version=0.1
+Version="0.1-alpha1"
 AUR_url="https://aur.archlinux.org/"
 
 def usage_help()
@@ -25,15 +25,38 @@ def check_lock()
 end
 
 def pkg_install(package)
-	puts "Checking if the package is already available in the official repositories..."
-	system("sudo pacman -S #{ARGV[1]}")
 	#TODO: Check success in the previous action and install from the AUR if it didn't suceed
 	system("mkdir -p /tmp/umbra")
+	system("rm -rf /tmp/umbra/#{package}")
+	code=%x(curl -Is #{AUR_url}packages/#{package} | head -1 | cut -d" " -f2).chomp
+	if code == "404"
+		puts "The package #{package} was not found in the AUR"
+		system("rm /tmp/umbra.lck")
+		exit 1
+	end
 	system("git clone #{AUR_url}#{package}.git /tmp/umbra/#{package}")
 	# s: SyncDeps
 	# i: Install when finished
 	# c: Clean when finished
+	print ">>".magenta
+	print " Do you want to modify PKGBUILD? (y/n): "
+	notRecognized = true
+	while notRecognized
+		case $stdin.gets.chomp
+		when "y", "Y"
+			print ">>".magenta
+			print " Choose an editor: "
+			editor = $stdin.gets.chomp
+			system("#{editor} /tmp/umbra/#{package}/PKGBUILD")
+			notRecognized = false
+		when "n", "N"
+			notRecognized = false
+		else
+			print "The answer was not recognized, please enter 'y' or 'n': "
+		end
+	end
 	system("cd /tmp/umbra/#{package} && makepkg -sic")
+	system("rm -rf /tmp/umbra/#{package}")
 end
 
 def upgrade_all()
@@ -43,11 +66,19 @@ def upgrade_all()
 end
 
 def remove_pkganddeps(package)
-	system("sudo pacman -Rs package")
+	system("sudo pacman -Rs #{package}")
 end
 
 def remove_pkg(package)
-	system("sudo pacman -R package")
+	system("sudo pacman -R #{package}")
+end
+
+trap "SIGINT" do
+	puts
+	print ">>".magenta
+	puts " Exiting Umbra..."
+	system("rm -rf /tmp/umbra.lck")
+	exit 1
 end
 
 check_lock()
@@ -62,6 +93,7 @@ if ARGV.length >= 1
 			i=1
 			while i < ARGV.length
 				pkg_install(ARGV[i])
+				i += 1
 			end
 		end
 	when "-Syu"
@@ -73,6 +105,7 @@ if ARGV.length >= 1
 			i=1
 			while i < ARGV.length
 				remove_pkganddeps(ARGV[i] )
+				i += 1
 			end
 		end
 
@@ -83,6 +116,7 @@ if ARGV.length >= 1
 			i=1
 			while i < ARGV.length
 				remove_pkg(ARGV[i] )
+				i += 1
 			end
 		end
 

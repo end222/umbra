@@ -18,5 +18,5 @@ The main difference is that Umbra is written in Ruby, a language that I really l
 
 ## As it is a WIP, what features are working?
 So far umbra can only:
-* Install packages, from official repos and from the AUR (More or less)
+* Install packages from the AUR
 * Update the system (Only official repos)
