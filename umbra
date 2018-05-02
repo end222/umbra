@@ -11,6 +11,8 @@ def usage_help()
 	puts "Operations:"
 	puts "-S: install a package"
 	puts "-Syu: upgrade repositories and packages, including the ones from the AUR"
+	puts "-R: remove a package"
+	puts "-Rs: remove a package and its dependencies"
 	puts "-h, --help: show this help page"
 	puts "-v: print version of the program"
 end
@@ -25,7 +27,7 @@ def check_lock()
 end
 
 def pkg_install(package)
-	#TODO: Check success in the previous action and install from the AUR if it didn't suceed
+	#TODO: Install from the official repos if it is available
 	system("mkdir -p /tmp/umbra")
 	system("rm -rf /tmp/umbra/#{package}")
 	code=%x(curl -Is #{AUR_url}packages/#{package} | head -1 | cut -d" " -f2).chomp
