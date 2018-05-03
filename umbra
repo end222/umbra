@@ -3,7 +3,7 @@
 require 'colorize'
 
 # Declaration of constants
-Version="0.1-alpha1"
+Version="0.1-alpha"
 AUR_url="https://aur.archlinux.org/"
 
 def usage_help()
@@ -127,7 +127,7 @@ if ARGV.length >= 1
 		usage_help()
 	# Show package version
 	when "-v"
-		puts "Umbra AUR helper, version #{version}"
+		puts "Umbra AUR helper, version #{Version}"
 		puts "Developed by end222"
 	else
 		puts "Operation not recognized"

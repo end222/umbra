@@ -15,6 +15,7 @@ The main difference is that Umbra is written in Ruby, a language that I really l
 * Ruby
 * Git
 * Curl
+* Makepkg
 * Colorize gem (gem install colorize)
 
 ## As it is a WIP, what features are working?
