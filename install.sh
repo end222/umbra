@@ -35,5 +35,15 @@ else
 	exit 1
 fi
 
-sudo cp umbra /usr/bin/umbra
+echo -n "Checking if MakePKG is installed..."
+if [ -f /usr/bin/makepkg ]
+then
+	echo " OK"
+else
+	echo " ERROR"
+	echo "/usr/bin/makepkg does not exist"
+	exit 1
+fi
+
+sudo cp -v umbra /usr/bin/umbra
 echo "Umbra was installed successfully"
