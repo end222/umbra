@@ -17,15 +17,6 @@ def usage_help()
 	puts "-v: print version of the program"
 end
 
-def check_lock()
-	if File.file?("/tmp/umbra.lck")
-		puts "Warning!".red
-		puts "/tmp/umbra.lck exists, which means that another instance of the program is already running"
-		puts "If that is not the case remove that file in order to be able to use umbra again"
-		exit 1
-	end
-end
-
 def pkg_install(package)
 	#TODO: Install from the official repos if it is available
 	system("mkdir -p /tmp/umbra")
@@ -79,12 +70,9 @@ trap "SIGINT" do
 	puts
 	print ">>".magenta
 	puts " Exiting Umbra..."
-	system("rm -rf /tmp/umbra.lck")
 	exit 1
 end
 
-check_lock()
-%x(touch /tmp/umbra.lck)
 if ARGV.length >= 1
 	# Install new package
 	case ARGV[0]
@@ -136,4 +124,3 @@ else
 	puts "No operation code was given"
 	puts "Usage: umbra <operation> [package_name]"
 end
-%x(rm /tmp/umbra.lck)
