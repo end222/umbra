@@ -1,5 +1,10 @@
 #!/usr/bin/ruby
 
+#
+# Umbra AUR helper
+# File: umbra
+#
+
 require 'colorize'
 
 # Declaration of constants
