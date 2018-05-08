@@ -29,7 +29,6 @@ def pkg_install(package)
 	code=%x(curl -Is #{AUR_url}packages/#{package} | head -1 | cut -d" " -f2).chomp
 	if code == "404"
 		puts "The package #{package} was not found in the AUR"
-		system("rm /tmp/umbra.lck")
 		exit 1
 	end
 	system("git clone #{AUR_url}#{package}.git /tmp/umbra/#{package}")
