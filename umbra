@@ -65,7 +65,11 @@ end
 
 # Help page for umbra
 def usage_help()
+	puts
+	puts "Umbra help page".yellow
+	puts "===============".yellow
 	puts "Usage: umbra <operation> [package_name]"
+	puts
 	puts "Operations:"
 	puts "-S: install a package"
 	puts "-Syu: upgrade repositories and packages, including the ones from the AUR"
@@ -73,6 +77,9 @@ def usage_help()
 	puts "-Rs: remove a package and its dependencies"
 	puts "-h, --help: show this help page"
 	puts "-v: print version of the program"
+	puts
+	puts "Options:"
+	puts "--quiet: install the package asking only the needed questions to the user" 
 end
 
 def pkg_install(package)
