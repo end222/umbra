@@ -11,6 +11,59 @@ require 'colorize'
 Version="0.1-alpha"
 AUR_url="https://aur.archlinux.org/"
 
+# Show some info about the package that will be installed
+def show_pkg_info(package)
+	dependencies = []
+	opt = []
+	name, version, release, description = ""
+	puts
+	puts ">> ".magenta
+	puts "Package that will be installed".yellow
+	puts "==============================".yellow
+	File.readlines("/tmp/umbra/#{package}/.SRCINFO").each {
+		|line| case line.split("=")[0].delete_prefix("\t").strip
+		when "pkgbase"
+			name = line.split("=")[1].strip
+		when "pkgver"
+			version = line.split("=")[1].strip
+		when "pkgrel"
+			release = line.split("=")[1].strip
+		when "pkgdesc"
+			description = line.split("=")[1].strip
+		when "depends"
+			dependencies << line.split("=")[1].strip
+		when "optdepends"
+			opt << line.split("=")[1].strip
+		end
+	}
+	puts "Name: #{name}"
+	puts "Version: #{version}"
+	puts "Release: #{release}"
+	puts "Description: #{description}"
+	if dependencies.length > 1
+		puts
+		puts "Dependencies".yellow
+		puts "============".yellow
+		i = 0
+		while i < dependencies.length
+			puts "#{dependencies[i]}"
+			i += 1
+		end
+	end
+	if opt.length > 1
+		puts
+		puts "Optional dependencies".yellow
+		puts "=====================".yellow
+		i = 0
+		while i < opt.length
+			puts "#{opt[i]}"
+			i += 1
+		end
+	end
+	puts
+end
+
+# Help page for umbra
 def usage_help()
 	puts "Usage: umbra <operation> [package_name]"
 	puts "Operations:"
@@ -23,35 +76,54 @@ def usage_help()
 end
 
 def pkg_install(package)
-	#TODO: Install from the official repos if it is available
 	system("mkdir -p /tmp/umbra")
 	system("rm -rf /tmp/umbra/#{package}")
 	code=%x(curl -Is #{AUR_url}packages/#{package} | head -1 | cut -d" " -f2).chomp
 	if code == "404"
+		print "Error: ".red
 		puts "The package #{package} was not found in the AUR"
+		print ">> ".magenta
+		print "Do you want to try to install it from the official repositories? (y/n): "
+		notRecognized = true
+		while notRecognized
+			case $stdin.gets.chomp
+			when "y", "Y"
+				system("sudo pacman -S #{package}")
+				notRecognized = false
+				exit 0
+			when "n", "N"
+				notRecognized = false
+				exit 0
+			else
+				print ">> ".magenta
+				print "The answer was not recognized, please enter 'y' or 'n': "
+			end
+		end
 		exit 1
 	end
 	system("git clone #{AUR_url}#{package}.git /tmp/umbra/#{package}")
-	# s: SyncDeps
-	# i: Install when finished
-	# c: Clean when finished
-	print ">>".magenta
-	print " Do you want to modify PKGBUILD? (y/n): "
+	show_pkg_info(package)
+	print ">> ".magenta
+	print "Do you want to modify PKGBUILD? (y/n): "
 	notRecognized = true
 	while notRecognized
 		case $stdin.gets.chomp
 		when "y", "Y"
-			print ">>".magenta
-			print " Choose an editor: "
+			print ">> ".magenta
+			print "Choose an editor: "
 			editor = $stdin.gets.chomp
 			system("#{editor} /tmp/umbra/#{package}/PKGBUILD")
 			notRecognized = false
 		when "n", "N"
 			notRecognized = false
 		else
+			print ">> ".magenta
 			print "The answer was not recognized, please enter 'y' or 'n': "
 		end
 	end
+	# s: SyncDeps
+	# i: Install when finished
+	# c: Clean when finished
 	system("cd /tmp/umbra/#{package} && makepkg -sic")
 	system("rm -rf /tmp/umbra/#{package}")
 end
@@ -72,8 +144,8 @@ end
 
 trap "SIGINT" do
 	puts
-	print ">>".magenta
-	puts " Exiting Umbra..."
+	print ">> ".magenta
+	puts "Exiting Umbra..."
 	exit 1
 end
 
