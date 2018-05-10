@@ -18,7 +18,6 @@ def show_pkg_info(package)
 	aur_deps = []
 	name, version, release, description = ""
 	puts
-	puts ">> ".magenta
 	puts "Package that will be installed".yellow
 	puts "==============================".yellow
 	File.readlines("/tmp/umbra/#{package}/.SRCINFO").each {
@@ -124,7 +123,22 @@ def pkg_install(package)
 		exit 1
 	end
 	system("git clone #{AUR_url}#{package}.git /tmp/umbra/#{package}")
-	show_pkg_info(package)
+	show_pkg_info(package)	
+	print ">> ".magenta
+	print "Do you want to install #{package}? (y/n): "
+	notRecognized = true
+	while notRecognized
+		case $stdin.gets.chomp
+		when "y", "Y"
+			notRecognized = false
+		when "n", "N"
+			notRecognized = false
+			exit 0
+		else
+			print ">> ".magenta
+			print "The answer was not recognized, please enter 'y' or 'n': "
+		end
+	end
 	print ">> ".magenta
 	print "Do you want to modify PKGBUILD? (y/n): "
 	notRecognized = true
