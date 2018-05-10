@@ -14,7 +14,8 @@ AUR_url="https://aur.archlinux.org/"
 # Show some info about the package that will be installed
 def show_pkg_info(package)
 	dependencies = []
-	opt = []
+       	opt = []
+	aur_deps = []
 	name, version, release, description = ""
 	puts
 	puts ">> ".magenta
@@ -46,7 +47,15 @@ def show_pkg_info(package)
 		puts "============".yellow
 		i = 0
 		while i < dependencies.length
-			puts "#{dependencies[i]}"
+			print "#{dependencies[i]} "
+			# Check what packages are available in the AUR
+			code=%x(curl -Is #{AUR_url}packages/#{dependencies[i].split(" ")[0]} | head -1 | cut -d" " -f2).chomp
+			if code != "404"
+				puts "(Will be installed from the AUR)"
+				aur_deps << dependencies[i].split(" ")[0]
+			else
+				puts
+			end
 			i += 1
 		end
 	end
@@ -61,6 +70,12 @@ def show_pkg_info(package)
 		end
 	end
 	puts
+	while aur_deps.length > 0
+		print ">> ".magenta
+		puts "Installing dependencies that are only available in the AUR"
+		pkg_install(aur_deps[0])
+		aur_deps.delete_at(0)
+	end
 end
 
 # Help page for umbra
