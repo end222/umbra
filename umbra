@@ -10,6 +10,7 @@ require 'colorize'
 # Declaration of constants
 Version="0.1-alpha"
 AUR_url="https://aur.archlinux.org/"
+@quiet=false
 
 # Show some info about the package that will be installed
 def show_pkg_info(package)
@@ -105,13 +106,36 @@ def pkg_install(package)
 		puts "The package #{package} was not found in the AUR"
 		print ">> ".magenta
 		print "Do you want to try to install it from the official repositories? (y/n): "
+		if !@quiet
+			notRecognized = true
+			while notRecognized
+				case $stdin.gets.chomp
+				when "y", "Y"
+					system("sudo pacman -S #{package}")
+					notRecognized = false
+					exit 0
+				when "n", "N"
+					notRecognized = false
+					exit 0
+				else
+					print ">> ".magenta
+					print "The answer was not recognized, please enter 'y' or 'n': "
+				end
+			end
+		else
+			system("sudo pacman -S #{package}")
+		end
+	end
+	system("git clone #{AUR_url}#{package}.git /tmp/umbra/#{package}")
+	show_pkg_info(package)	
+	if !@quiet
+		print ">> ".magenta
+		print "Do you want to install #{package}? (y/n): "
 		notRecognized = true
 		while notRecognized
 			case $stdin.gets.chomp
 			when "y", "Y"
-				system("sudo pacman -S #{package}")
 				notRecognized = false
-				exit 0
 			when "n", "N"
 				notRecognized = false
 				exit 0
@@ -120,41 +144,25 @@ def pkg_install(package)
 				print "The answer was not recognized, please enter 'y' or 'n': "
 			end
 		end
-		exit 1
 	end
-	system("git clone #{AUR_url}#{package}.git /tmp/umbra/#{package}")
-	show_pkg_info(package)	
-	print ">> ".magenta
-	print "Do you want to install #{package}? (y/n): "
-	notRecognized = true
-	while notRecognized
-		case $stdin.gets.chomp
-		when "y", "Y"
-			notRecognized = false
-		when "n", "N"
-			notRecognized = false
-			exit 0
-		else
-			print ">> ".magenta
-			print "The answer was not recognized, please enter 'y' or 'n': "
-		end
-	end
-	print ">> ".magenta
-	print "Do you want to modify PKGBUILD? (y/n): "
-	notRecognized = true
-	while notRecognized
-		case $stdin.gets.chomp
-		when "y", "Y"
-			print ">> ".magenta
-			print "Choose an editor: "
-			editor = $stdin.gets.chomp
-			system("#{editor} /tmp/umbra/#{package}/PKGBUILD")
-			notRecognized = false
-		when "n", "N"
-			notRecognized = false
-		else
-			print ">> ".magenta
-			print "The answer was not recognized, please enter 'y' or 'n': "
+	if !@quiet
+		print ">> ".magenta
+		print "Do you want to modify PKGBUILD? (y/n): "
+		notRecognized = true
+		while notRecognized
+			case $stdin.gets.chomp
+			when "y", "Y"
+				print ">> ".magenta
+				print "Choose an editor: "
+				editor = $stdin.gets.chomp
+				system("#{editor} /tmp/umbra/#{package}/PKGBUILD")
+				notRecognized = false
+			when "n", "N"
+				notRecognized = false
+			else
+				print ">> ".magenta
+				print "The answer was not recognized, please enter 'y' or 'n': "
+			end
 		end
 	end
 	# s: SyncDeps
@@ -192,9 +200,30 @@ if ARGV.length >= 1
 		if ARGV.length < 2
 			puts "Usage: umbra -S <package_name>"
 		else
-			i=1
+			i = 1
+			packages = []
+			options = []
 			while i < ARGV.length
-				pkg_install(ARGV[i])
+				if ARGV[i][0] != "-"
+					packages << ARGV[i]
+				elsif ARGV[i][1] == "-"
+					options << ARGV[i]
+				end
+				i += 1
+			end
+			i = 0
+			while i < options.length
+				if options[i] == "--quiet"
+					@quiet = true
+				else
+					puts "Option #{options[i]} not recognized"
+				end
+				i += 1
+			end
+			
+			i = 0
+			while i < packages.length
+				pkg_install(packages[i])
 				i += 1
 			end
 		end
@@ -202,7 +231,7 @@ if ARGV.length >= 1
 		upgrade_all()
 	when "-Rs"
 		if ARGV.length < 2
-			puts "Usage: umbra -S <package_name>"
+			puts "Usage: umbra -Rs <package_name>"
 		else
 			i=1
 			while i < ARGV.length
@@ -213,7 +242,7 @@ if ARGV.length >= 1
 
 	when "-R"
 		if ARGV.length < 2
-			puts "Usage: umbra -S <package_name>"
+			puts "Usage: umbra -R <package_name>"
 		else
 			i=1
 			while i < ARGV.length
