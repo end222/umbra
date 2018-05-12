@@ -3,6 +3,7 @@
 #
 # Umbra AUR helper
 # File: umbra
+# Author: end222
 #
 
 require 'colorize'
@@ -11,6 +12,28 @@ require 'colorize'
 Version="0.1-alpha"
 AUR_url="https://aur.archlinux.org/"
 @quiet=false
+
+# Umbra directory creation
+def first_time()
+	puts "=================".yellow
+	puts "Welcome to Umbra!".yellow
+	puts "=================".yellow
+	puts
+	print ">> ".magenta
+	puts "Creating default files and directories..."
+	puts "Root privileges are needed in order to create them"
+	system("sudo mkdir -p /etc/umbra") 
+	system("sudo touch /etc/umbra/{config,installed}")
+	puts
+	puts "Global configuration file: /etc/umbra/config"
+	puts "User configuration file: $HOME/.umbra/config"
+	puts
+	puts "User config file has preference over global config file if it exists"
+	puts 
+	puts "Thanks for using Umbra!"
+	puts "Now the program will exit and the next time the new configuration files will be used"
+	exit 0
+end
 
 # Show some info about the package that will be installed
 def show_pkg_info(package)
@@ -90,11 +113,12 @@ def usage_help()
 	puts "-Syu: upgrade repositories and packages, including the ones from the AUR"
 	puts "-R: remove a package"
 	puts "-Rs: remove a package and its dependencies"
+	puts "-U: installs a local package, given the directory where the PKGBUILD file is located"
 	puts "-h, --help: show this help page"
 	puts "-v: print version of the program"
 	puts
 	puts "Options:"
-	puts "--quiet: install the package asking only the needed questions to the user" 
+	puts "--noconfirm: install the package without asking any questions to the user" 
 end
 
 def pkg_install(package)
@@ -104,9 +128,9 @@ def pkg_install(package)
 	if code == "404"
 		print "Error: ".red
 		puts "The package #{package} was not found in the AUR"
-		print ">> ".magenta
-		print "Do you want to try to install it from the official repositories? (y/n): "
 		if !@quiet
+			print ">> ".magenta
+			print "Do you want to try to install it from the official repositories? (y/n): "
 			notRecognized = true
 			while notRecognized
 				case $stdin.gets.chomp
@@ -123,7 +147,7 @@ def pkg_install(package)
 				end
 			end
 		else
-			system("sudo pacman -S #{package}")
+			system("sudo pacman -S --noconfirm #{package}")
 		end
 	end
 	system("git clone #{AUR_url}#{package}.git /tmp/umbra/#{package}")
@@ -193,6 +217,9 @@ trap "SIGINT" do
 	exit 1
 end
 
+if !File.exist?("/etc/umbra/config") && !File.exist?("~/.umbra/config")
+	first_time()
+end
 if ARGV.length >= 1
 	# Install new package
 	case ARGV[0]
