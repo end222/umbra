@@ -13,28 +13,6 @@ Version="0.1-alpha"
 AUR_url="https://aur.archlinux.org/"
 @quiet=false
 
-# Umbra directory creation
-def first_time()
-	puts "=================".yellow
-	puts "Welcome to Umbra!".yellow
-	puts "=================".yellow
-	puts
-	print ">> ".magenta
-	puts "Creating default files and directories..."
-	puts "Root privileges are needed in order to create them"
-	system("sudo mkdir -p /etc/umbra") 
-	system("sudo touch /etc/umbra/{config,installed}")
-	puts
-	puts "Global configuration file: /etc/umbra/config"
-	puts "User configuration file: $HOME/.umbra/config"
-	puts
-	puts "User config file has preference over global config file if it exists"
-	puts 
-	puts "Thanks for using Umbra!"
-	puts "Now the program will exit and the next time the new configuration files will be used"
-	exit 0
-end
-
 # Show some info about the package that will be installed
 def show_pkg_info(package)
 	dependencies = []
@@ -217,9 +195,6 @@ trap "SIGINT" do
 	exit 1
 end
 
-if !File.exist?("/etc/umbra/config") && !File.exist?("~/.umbra/config")
-	first_time()
-end
 if ARGV.length >= 1
 	# Install new package
 	case ARGV[0]
@@ -240,7 +215,7 @@ if ARGV.length >= 1
 			end
 			i = 0
 			while i < options.length
-				if options[i] == "--quiet"
+				if options[i] == "--noconfirm"
 					@quiet = true
 				else
 					puts "Option #{options[i]} not recognized"

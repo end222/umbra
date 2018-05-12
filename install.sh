@@ -47,3 +47,6 @@ fi
 
 sudo cp -v umbra /usr/bin/umbra
 echo "Umbra was installed successfully"
+echo "Creating configuration files..."
+sudo mkdir -p /etc/umbra
+sudo touch /etc/umbra/{config,installed}

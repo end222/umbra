@@ -23,3 +23,10 @@ So far umbra can only:
 * Install packages from the AUR and official repos
 * Update the system (Only official repos)
 * Remove a package and its dependencies
+
+## Configuration Files
+Umbra is configured using:
+/etc/umbra/config (Global configuration file)
+~/.umbra/config (User configuration file)
+
+User configuration file has preference over global one if it exists
