@@ -31,9 +31,9 @@ def show_pkg_info(package)
 		when "pkgrel"
 			release = line.split("=")[1].strip
 		when "pkgdesc"
-			description = line.split("=")[1].strip
+			description = line.split("=")[1]
 		when "depends"
-			dependencies << line.split("=")[1].strip
+			dependencies << line.split("=")[1].strip.split(" ")[0].split("<")[0].split(">")[0].split(">")[0]
 		when "optdepends"
 			opt << line.split("=")[1].strip
 		end
@@ -50,7 +50,7 @@ def show_pkg_info(package)
 		while i < dependencies.length
 			print "#{dependencies[i]} "
 			# Check what packages are available in the AUR
-			code=%x(curl -Is #{AUR_url}packages/#{dependencies[i].split(" ")[0]} | head -1 | cut -d" " -f2).chomp
+			code=%x(curl -Is #{AUR_url}packages/#{dependencies[i].split(" ")[0].split("<")[0].split(">")[0].split(">")[0]} | head -1 | cut -d" " -f2).chomp
 			if code != "404"
 				puts "(Will be installed from the AUR)"
 				aur_deps << dependencies[i].split(" ")[0]
