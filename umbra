@@ -15,7 +15,13 @@ AUR_url="https://aur.archlinux.org/"
 # Declaration of global variables
 @quiet=false
 
-# Evaluate the options given
+#TODO
+# Function that changes the global variable depending on the values from the configuration files
+def read_config()
+
+end
+
+# Evaluate the options given and alter default values (or the ones defined in config files)
 def evaluate_options(options)
 	i = 0
 	while i < options.length
@@ -250,20 +256,24 @@ def pkg_local_install(directory)
 		system("rm -rf /tmp/umbra/local_install")
 end
 
+# Upgrade all packages from the system
 def upgrade_all()
 	# TODO: Update AUR packages too
 	puts "Updating official packages..."
 	system("sudo pacman -Syu")
 end
 
+# Remove an installed package and its dependencies
 def remove_pkganddeps(package)
 	system("sudo pacman -Rs #{package}")
 end
 
+# Removed an installed package
 def remove_pkg(package)
 	system("sudo pacman -R #{package}")
 end
 
+# Clean up even when SIGINT is sent by the user
 trap "SIGINT" do
 	puts
 	print ">> ".magenta
