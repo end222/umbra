@@ -11,10 +11,11 @@ require 'colorize'
 # Declaration of constants
 Version="0.1-alpha"
 AUR_url="https://aur.archlinux.org/"
+
+# Declaration of global variables
 @quiet=false
 
-# Show some info about the package that will be installed
-
+# Evaluate the options given
 def evaluate_options(options)
 	i = 0
 	while i < options.length
@@ -27,6 +28,7 @@ def evaluate_options(options)
 	end
 end
 
+# Show some info about the package that will be installed
 def show_pkg_info(package)
 	dependencies = []
        	opt = []
@@ -35,6 +37,8 @@ def show_pkg_info(package)
 	puts
 	puts "Package that will be installed".yellow
 	puts "==============================".yellow
+
+	# Get basic information about the package from the PKGBUILD file
 	File.readlines("/tmp/umbra/#{package}/.SRCINFO").each {
 		|line| case line.split("=")[0].delete_prefix("\t").strip
 		when "pkgbase"
@@ -51,6 +55,8 @@ def show_pkg_info(package)
 			opt << line.split("=")[1].strip
 		end
 	}
+
+	# Show dependencies
 	puts "Name: #{name}"
 	puts "Version: #{version}"
 	puts "Release: #{release}"
@@ -73,6 +79,8 @@ def show_pkg_info(package)
 			i += 1
 		end
 	end
+
+	# Show optional dependencies
 	if opt.length > 1
 		puts
 		puts "Optional dependencies".yellow
@@ -84,6 +92,8 @@ def show_pkg_info(package)
 		end
 	end
 	puts
+
+	# Start installing the dependencies that are from the AUR
 	while aur_deps.length > 0
 		print ">> ".magenta
 		puts "Installing dependencies that are only available in the AUR"
@@ -113,7 +123,6 @@ def usage_help()
 end
 
 def pkg_install(package)
-	system("mkdir -p /tmp/umbra")
 	system("rm -rf /tmp/umbra/#{package}")
 	code=%x(curl -Is #{AUR_url}packages/#{package} | head -1 | cut -d" " -f2).chomp
 	if code == "404"
@@ -184,12 +193,61 @@ def pkg_install(package)
 	# i: Install when finished
 	# c: Clean when finished
 	system("cd /tmp/umbra/#{package} && makepkg -sic")
+
+	# Cleaning up
 	system("rm -rf /tmp/umbra/#{package}")
 end
 
-#TODO Implement this funtion
-def package_local_install()
+# Installs a package given the directory where its PKGBUILD is located
+def pkg_local_install(directory)
+	# The build of the package will be done in /tmp
+	system("cp -rf #{directory} /tmp/umbra/local_install")
+	show_pkg_info(package)	
+		if !@quiet
+			print ">> ".magenta
+			print "Do you want to install #{package}? (y/n): "
+			notRecognized = true
+			while notRecognized
+				case $stdin.gets.chomp
+				when "y", "Y"
+					notRecognized = false
+				when "n", "N"
+					notRecognized = false
+					exit 0
+				else
+					print ">> ".magenta
+					print "The answer was not recognized, please enter 'y' or 'n': "
+				end
+			end
+		end
+		if !@quiet
+			print ">> ".magenta
+			print "Do you want to modify PKGBUILD? (y/n): "
+			notRecognized = true
+			while notRecognized
+				case $stdin.gets.chomp
+				when "y", "Y"
+					print ">> ".magenta
+					print "Choose an editor: "
+					editor = $stdin.gets.chomp
+					system("#{editor} /tmp/umbra/local_install/PKGBUILD")
+					notRecognized = false
+				when "n", "N"
+					notRecognized = false
+				else
+					print ">> ".magenta
+					print "The answer was not recognized, please enter 'y' or 'n': "
+				end
+			end
+		end
 
+		# s: SyncDeps
+		# i: Install when finished
+		# c: Clean when finished
+		system("cd /tmp/umbra/local_install && makepkg -sic")
+
+		# Cleaning up
+		system("rm -rf /tmp/umbra/local_install")
 end
 
 def upgrade_all()
@@ -210,8 +268,14 @@ trap "SIGINT" do
 	puts
 	print ">> ".magenta
 	puts "Exiting Umbra..."
+
+	#Cleaning up
+	system("rm -rf /tmp/umbra")
 	exit 1
 end
+
+# Create directory in tmp to store files during installation
+system("mkdir -p /tmp/umbra")
 
 if ARGV.length >= 1
 	# Install new package
@@ -276,7 +340,7 @@ if ARGV.length >= 1
 		end
 	when "-U"
 		if ARGV.length < 2
-			puts "Usage: umbra -U" 
+			puts "Usage: umbra -U <directory>"
 		else
 			while i < ARGV.length
 				if ARGV[i][0] != "-"
@@ -287,8 +351,12 @@ if ARGV.length >= 1
 			end
 
 			evaluate_options(options)
-
-			pkg_local_install()
+			if File.exists("#{directory}/PKGBUILD")
+				pkg_local_install()
+			else
+				print ">> ".magenta
+				puts "#{directory} does not contain a PKGBUILD file"
+			end
 		end
 
 	# Show help page
@@ -305,3 +373,6 @@ else
 	puts "No operation code was given"
 	puts "Usage: umbra <operation> [package_name]"
 end
+
+# Cleaning up
+system("rm -rf /tmp/umbra")
