@@ -14,6 +14,19 @@ AUR_url="https://aur.archlinux.org/"
 @quiet=false
 
 # Show some info about the package that will be installed
+
+def evaluate_options(options)
+	i = 0
+	while i < options.length
+		if options[i] == "--noconfirm"
+			@quiet = true
+		else
+			puts "Option #{options[i]} not recognized"
+		end
+		i += 1
+	end
+end
+
 def show_pkg_info(package)
 	dependencies = []
        	opt = []
@@ -174,6 +187,11 @@ def pkg_install(package)
 	system("rm -rf /tmp/umbra/#{package}")
 end
 
+#TODO Implement this funtion
+def package_local_install()
+
+end
+
 def upgrade_all()
 	# TODO: Update AUR packages too
 	puts "Updating official packages..."
@@ -213,16 +231,9 @@ if ARGV.length >= 1
 				end
 				i += 1
 			end
-			i = 0
-			while i < options.length
-				if options[i] == "--noconfirm"
-					@quiet = true
-				else
-					puts "Option #{options[i]} not recognized"
-				end
-				i += 1
-			end
 			
+			evaluate_options(options)
+
 			i = 0
 			while i < packages.length
 				pkg_install(packages[i])
@@ -235,11 +246,22 @@ if ARGV.length >= 1
 		if ARGV.length < 2
 			puts "Usage: umbra -Rs <package_name>"
 		else
-			i=1
 			while i < ARGV.length
-				remove_pkganddeps(ARGV[i] )
+				if ARGV[i][0] != "-"
+					packages << ARGV[i]
+				elsif ARGV[i][1] == "-"
+					options << ARGV[i]
+				end
+			end
+
+			evaluate_options(options)
+
+			i = 0
+			while i < packages.length
+				remove_pkganddeps(packages[i])
 				i += 1
 			end
+
 		end
 
 	when "-R"
@@ -251,6 +273,22 @@ if ARGV.length >= 1
 				remove_pkg(ARGV[i] )
 				i += 1
 			end
+		end
+	when "-U"
+		if ARGV.length < 2
+			puts "Usage: umbra -U" 
+		else
+			while i < ARGV.length
+				if ARGV[i][0] != "-"
+					packages << ARGV[i]
+				elsif ARGV[i][1] == "-"
+					options << ARGV[i]
+				end
+			end
+
+			evaluate_options(options)
+
+			pkg_local_install()
 		end
 
 	# Show help page
