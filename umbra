@@ -259,6 +259,7 @@ end
 # Upgrade all packages from the system
 def upgrade_all()
 	# TODO: Update AUR packages too
+	print ">> ".magenta
 	puts "Updating official packages..."
 	system("sudo pacman -Syu")
 end
