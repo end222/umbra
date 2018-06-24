@@ -9,11 +9,35 @@
 require 'colorize'
 
 # Declaration of constants
-Version="0.1-alpha"
-AUR_url="https://aur.archlinux.org/"
+Version = "0.1-alpha"
+AUR_url = "https://aur.archlinux.org/"
+AUR_pkgs = `pacman -Qm`
 
 # Declaration of global variables
 @quiet=false
+
+# Help page for umbra
+def usage_help()
+	puts
+	puts "Umbra help page".yellow
+	puts "===============".yellow
+	puts "Usage: umbra <operation> [package_name]"
+	puts
+	puts "Operations:"
+	puts "-S: install a package"
+	puts "-Syu: upgrade repositories and packages, including the ones from the AUR"
+	puts "-R: remove a package"
+	puts "-Rs: remove a package and its dependencies"
+	puts "-Q: show all installed packages (Official + AUR)"
+	puts "-Qa: show packages that were installed from the AUR"
+	puts "-U: installs a local package, given the directory where the PKGBUILD file is located"
+	puts "-h, --help: show this help page"
+	puts "-v: print version of the program"
+	puts
+	puts "Options:"
+	puts "--noconfirm: install the package without asking any questions to the user" 
+end
+
 
 #TODO
 # Function that changes the global variable depending on the values from the configuration files
@@ -106,26 +130,6 @@ def show_pkg_info(package)
 		pkg_install(aur_deps[0])
 		aur_deps.delete_at(0)
 	end
-end
-
-# Help page for umbra
-def usage_help()
-	puts
-	puts "Umbra help page".yellow
-	puts "===============".yellow
-	puts "Usage: umbra <operation> [package_name]"
-	puts
-	puts "Operations:"
-	puts "-S: install a package"
-	puts "-Syu: upgrade repositories and packages, including the ones from the AUR"
-	puts "-R: remove a package"
-	puts "-Rs: remove a package and its dependencies"
-	puts "-U: installs a local package, given the directory where the PKGBUILD file is located"
-	puts "-h, --help: show this help page"
-	puts "-v: print version of the program"
-	puts
-	puts "Options:"
-	puts "--noconfirm: install the package without asking any questions to the user" 
 end
 
 def pkg_install(package)
@@ -262,6 +266,16 @@ def upgrade_all()
 	print ">> ".magenta
 	puts "Updating official packages..."
 	system("sudo pacman -Syu")
+
+	print ">> ".magenta
+	puts "Updating AUR packages..."
+end
+
+# Show installed AUR packages
+def installed_AUR()
+	print ">> ".magenta
+	puts "Installed AUR packages"
+	puts "#{AUR_pkgs}"
 end
 
 # Remove an installed package and its dependencies
@@ -289,25 +303,33 @@ end
 system("mkdir -p /tmp/umbra")
 
 if ARGV.length >= 1
-	# Install new package
+	i = 1
+	options = []
+	
+	while i < ARGV.length
+	       if ARGV[i][0] == "-" && ARGV[i][1] == "-"
+		       options << ARGV[i]
+	       end
+	       i += 1
+	end
+
+	evaluate_options(options)
+
 	case ARGV[0]
+		
+	# Install new package
 	when "-S"
 		if ARGV.length < 2
 			puts "Usage: umbra -S <package_name>"
 		else
 			i = 1
 			packages = []
-			options = []
 			while i < ARGV.length
 				if ARGV[i][0] != "-"
 					packages << ARGV[i]
-				elsif ARGV[i][1] == "-"
-					options << ARGV[i]
 				end
 				i += 1
 			end
-			
-			evaluate_options(options)
 
 			i = 0
 			while i < packages.length
@@ -324,12 +346,8 @@ if ARGV.length >= 1
 			while i < ARGV.length
 				if ARGV[i][0] != "-"
 					packages << ARGV[i]
-				elsif ARGV[i][1] == "-"
-					options << ARGV[i]
 				end
 			end
-
-			evaluate_options(options)
 
 			i = 0
 			while i < packages.length
@@ -356,12 +374,9 @@ if ARGV.length >= 1
 			while i < ARGV.length
 				if ARGV[i][0] != "-"
 					packages << ARGV[i]
-				elsif ARGV[i][1] == "-"
-					options << ARGV[i]
 				end
 			end
 
-			evaluate_options(options)
 			if File.exists("#{directory}/PKGBUILD")
 				pkg_local_install()
 			else
@@ -369,6 +384,9 @@ if ARGV.length >= 1
 				puts "#{directory} does not contain a PKGBUILD file"
 			end
 		end
+
+	when "-Qa"
+		installed_AUR()
 
 	# Show help page
 	when "-h", "--help"
